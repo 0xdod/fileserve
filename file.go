@@ -8,14 +8,9 @@ import (
 type File struct {
 	ID        string
 	Name      string
-	Location  string
+	URL       string
 	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"created_at"`
-}
-
-type FileUploadParam struct {
-	Name    string
-	Content []byte
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 type GetFilesParam struct {
@@ -29,10 +24,9 @@ type UpdateFileParam struct {
 }
 
 type FileService interface {
-	UploadFile(ctx context.Context, param FileUploadParam) (*File, error)
-	DownloadFile(ctx context.Context, file File) ([]byte, error)
+	CreateFile(ctx context.Context, file *File) error
 	GetFiles(ctx context.Context, param GetFilesParam) ([]*File, error)
 	GetFile(ctx context.Context, id string) (*File, error)
 	UpdateFile(ctx context.Context, id string, param UpdateFileParam) error
-	// DeleteFile(ctx context.Context, file File) error
+	DeleteFile(ctx context.Context, id string) error
 }

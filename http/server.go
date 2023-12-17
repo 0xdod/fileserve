@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/0xdod/fileserve"
 	"github.com/0xdod/fileserve/filestorage"
 	"github.com/0xdod/fileserve/sqlite"
 	"github.com/gorilla/mux"
@@ -15,6 +16,7 @@ type Server struct {
 	db        *sqlite.DB
 	mux       *mux.Router
 	filestore filestorage.FileStorage
+	fs        fileserve.FileService
 }
 
 type NewServerOpts struct {
@@ -38,13 +40,16 @@ func NewServer(opt NewServerOpts) *Server {
 			Region:          viper.GetString("AWS_REGION"),
 			BucketName:      viper.GetString("AWS_BUCKET_NAME"),
 		}),
+		fs: sqlite.NewFileService(opt.DB),
 	}
 
 	s.server = &http.Server{
 		Addr:    addr,
 		Handler: s.mux,
 	}
+
 	s.registerRoutes()
+
 	return s
 }
 
@@ -59,7 +64,7 @@ func (s *Server) registerRoutes() {
 		w.WriteHeader(200)
 		fmt.Fprint(w, "<h1>Hello World</h2>")
 	})
-	// v1.Handle("/files/upload", s.handleLogin()).Methods("POST")
+	v1.Handle("/files/upload", s.handleUpload()).Methods("POST")
 	// v1.Handle("/files/download/{name}", ).Methods("GET")
 	// v1.Handle("/files", ).Methods("GET")
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -45,8 +46,10 @@ func NewS3StorageBackend(cfg *S3BackendConfig) *s3Backend {
 		Credentials: credentials.NewStaticCredentials(cfg.AccessKeyID, cfg.SecretAccessKey, ""),
 	}))
 
+	client := s3.New(sess)
+
 	return &s3Backend{
-		client:     s3.New(sess),
+		client:     client,
 		bucketName: cfg.BucketName,
 		region:     cfg.Region,
 	}
@@ -64,7 +67,7 @@ func (s *s3Backend) Upload(ctx context.Context, param UploadParam) (string, erro
 		log.Fatal(err)
 	}
 
-	endpoint := fmt.Sprintf("https://s3-%s.amazonaws.com/%s/%s", s.region, s.bucketName, param.Name)
+	endpoint := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.bucketName, strings.ReplaceAll(param.Name, " ", "+"))
 	fmt.Printf("File successfully uploaded to %s\n", endpoint)
 
 	return endpoint, nil
@@ -88,4 +91,45 @@ func (s *s3Backend) Download(ctx context.Context, name string) ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
+}
+
+func (s *s3Backend) createBucketWithPublicReadPolicy() {
+	// Check if the bucket exists
+	if _, err := s.client.HeadBucket(&s3.HeadBucketInput{
+		Bucket: aws.String(s.bucketName),
+	}); err != nil {
+		if err != nil {
+			// If the bucket doesn't exist, create it
+			_, err := s.client.CreateBucket(&s3.CreateBucketInput{
+				Bucket: aws.String(s.bucketName),
+			})
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("Bucket %s created\n", s.bucketName)
+
+			// Define the bucket policy for public read access
+			policy := `{
+		"Version":"2012-10-17",
+		"Statement":[{
+			"Sid":"PublicReadGetObject",
+			"Effect":"Allow",
+			"Principal": "*",
+			"Action":["s3:GetObject"],
+			"Resource":["arn:aws:s3:::` + s.bucketName + `/*"]
+		}]
+	}`
+
+			// Set the bucket policy
+			_, err = s.client.PutBucketPolicy(&s3.PutBucketPolicyInput{
+				Bucket: aws.String(s.bucketName),
+				Policy: aws.String(policy),
+			})
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("Bucket policy set for %s to allow public read access\n", s.bucketName)
+
+		}
+	}
 }
