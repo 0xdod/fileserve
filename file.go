@@ -9,8 +9,8 @@ type File struct {
 	ID        string
 	Name      string
 	Location  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"created_at"`
 }
 
 type FileUploadParam struct {
