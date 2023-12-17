@@ -8,6 +8,7 @@ import (
 
 	"github.com/0xdod/fileserve"
 	"github.com/0xdod/fileserve/filestorage"
+	"github.com/gorilla/mux"
 )
 
 func (s *Server) handleUpload() http.Handler {
@@ -57,5 +58,45 @@ func (s *Server) handleUpload() http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(newFile)
+	})
+}
+
+func (s *Server) handleDownload() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		fileId := vars["fileId"]
+
+		file, err := s.fs.GetFile(context.Background(), fileId)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Error Retrieving the File", http.StatusInternalServerError)
+			return
+		}
+
+		content, err := s.filestore.Download(context.Background(), file.Name)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Error Retrieving the File", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", file.Name))
+		w.Write(content)
+	})
+}
+
+func (s *Server) handleGetFiles() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		files, err := s.fs.GetFiles(context.Background(), fileserve.GetFilesParam{})
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Error Retrieving the Files", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(files)
 	})
 }

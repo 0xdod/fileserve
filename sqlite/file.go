@@ -32,11 +32,24 @@ func (fs *fileService) CreateFile(ctx context.Context, file *fileserve.File) err
 }
 
 func (fs *fileService) GetFiles(ctx context.Context, param fileserve.GetFilesParam) ([]*fileserve.File, error) {
-	query, args, err := sqlx.Named(`
-		SELECT * FROM files
-		WHERE (:name IS NULL OR name = :name)
-		LIMIT :limit OFFSET :offset
-	`, param)
+	if param.Limit == nil {
+		param.Limit = new(int)
+		*param.Limit = 10
+	}
+	if param.Offset == nil {
+		param.Offset = new(int)
+		*param.Offset = 0
+	}
+
+	sql := "SELECT * FROM files WHERE 1 = 1"
+
+	if param.Name != nil {
+		sql += " AND name = :name"
+	}
+
+	sql += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+
+	query, args, err := sqlx.Named(sql, param)
 
 	if err != nil {
 		return nil, err

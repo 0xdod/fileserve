@@ -65,6 +65,6 @@ func (s *Server) registerRoutes() {
 		fmt.Fprint(w, "<h1>Hello World</h2>")
 	})
 	v1.Handle("/files/upload", s.handleUpload()).Methods("POST")
-	// v1.Handle("/files/download/{name}", ).Methods("GET")
-	// v1.Handle("/files", ).Methods("GET")
+	v1.Handle("/files/download/{fileId}", s.handleDownload()).Methods("GET")
+	v1.Handle("/files", s.handleGetFiles()).Methods("GET")
 }
