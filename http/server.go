@@ -8,20 +8,21 @@ import (
 	"github.com/0xdod/fileserve/filestorage"
 	"github.com/0xdod/fileserve/sqlite"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 )
 
 type Server struct {
-	server    *http.Server
-	db        *sqlite.DB
-	mux       *mux.Router
-	filestore filestorage.FileStorage
-	fs        fileserve.FileService
+	server      *http.Server
+	db          *sqlite.DB
+	mux         *mux.Router
+	fileStorage filestorage.FileStorage
+	fileService fileserve.FileService
 }
 
 type NewServerOpts struct {
-	DB   *sqlite.DB
-	Addr *string
+	DB          *sqlite.DB
+	Addr        *string
+	FileStorage filestorage.FileStorage
+	FileService fileserve.FileService
 }
 
 func NewServer(opt NewServerOpts) *Server {
@@ -32,15 +33,10 @@ func NewServer(opt NewServerOpts) *Server {
 	}
 
 	s := &Server{
-		db:  opt.DB,
-		mux: mux.NewRouter(),
-		filestore: filestorage.NewS3StorageBackend(&filestorage.S3BackendConfig{
-			AccessKeyID:     viper.GetString("AWS_ACCESS_KEY_ID"),
-			SecretAccessKey: viper.GetString("AWS_SECRET_ACCESS_KEY"),
-			Region:          viper.GetString("AWS_REGION"),
-			BucketName:      viper.GetString("AWS_BUCKET_NAME"),
-		}),
-		fs: sqlite.NewFileService(opt.DB),
+		db:          opt.DB,
+		mux:         mux.NewRouter(),
+		fileStorage: opt.FileStorage,
+		fileService: opt.FileService,
 	}
 
 	s.server = &http.Server{
@@ -59,12 +55,16 @@ func (s *Server) Run() error {
 
 func (s *Server) registerRoutes() {
 	s.mux.Use(loggerMiddleware)
-	v1 := s.mux.PathPrefix("/api/v1").Subrouter()
-	v1.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
+	s.mux.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		fmt.Fprint(w, "<h1>Hello World</h2>")
 	})
+	v1 := s.mux.PathPrefix("/api/v1").Subrouter()
 	v1.Handle("/files/upload", s.handleUpload()).Methods("POST")
 	v1.Handle("/files/download/{fileId}", s.handleDownload()).Methods("GET")
 	v1.Handle("/files", s.handleGetFiles()).Methods("GET")
+}
+
+func (s *Server) Shutdown() error {
+	return s.server.Shutdown(nil)
 }

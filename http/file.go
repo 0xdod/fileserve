@@ -32,7 +32,7 @@ func (s *Server) handleUpload() http.Handler {
 
 		buffer := make([]byte, handler.Size)
 		file.Read(buffer)
-		loc, err := s.filestore.Upload(context.Background(), filestorage.UploadParam{
+		loc, err := s.fileStorage.Upload(context.Background(), filestorage.UploadParam{
 			Name:    handler.Filename,
 			Content: buffer,
 		})
@@ -49,7 +49,7 @@ func (s *Server) handleUpload() http.Handler {
 			URL:  loc,
 		}
 
-		if err := s.fs.CreateFile(context.Background(), &newFile); err != nil {
+		if err := s.fileService.CreateFile(context.Background(), &newFile); err != nil {
 			fmt.Println(err)
 			http.Error(w, "Error Saving the File", http.StatusInternalServerError)
 			return
@@ -66,14 +66,14 @@ func (s *Server) handleDownload() http.Handler {
 		vars := mux.Vars(r)
 		fileId := vars["fileId"]
 
-		file, err := s.fs.GetFile(context.Background(), fileId)
+		file, err := s.fileService.GetFile(context.Background(), fileId)
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, "Error Retrieving the File", http.StatusInternalServerError)
 			return
 		}
 
-		content, err := s.filestore.Download(context.Background(), file.Name)
+		content, err := s.fileStorage.Download(context.Background(), file.Name)
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, "Error Retrieving the File", http.StatusInternalServerError)
@@ -88,7 +88,7 @@ func (s *Server) handleDownload() http.Handler {
 
 func (s *Server) handleGetFiles() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		files, err := s.fs.GetFiles(context.Background(), fileserve.GetFilesParam{})
+		files, err := s.fileService.GetFiles(context.Background(), fileserve.GetFilesParam{})
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, "Error Retrieving the Files", http.StatusInternalServerError)

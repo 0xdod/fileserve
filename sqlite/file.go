@@ -36,6 +36,7 @@ func (fs *fileService) GetFiles(ctx context.Context, param fileserve.GetFilesPar
 		param.Limit = new(int)
 		*param.Limit = 10
 	}
+
 	if param.Offset == nil {
 		param.Offset = new(int)
 		*param.Offset = 0

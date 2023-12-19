@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/0xdod/fileserve/filestorage"
 	"github.com/0xdod/fileserve/http"
 	"github.com/0xdod/fileserve/sqlite"
 	"github.com/joho/godotenv"
@@ -41,6 +42,13 @@ func main() {
 	server := http.NewServer(http.NewServerOpts{
 		DB:   &db,
 		Addr: &port,
+		FileStorage: filestorage.NewS3StorageBackend(&filestorage.S3BackendConfig{
+			AccessKeyID:     viper.GetString("AWS_ACCESS_KEY_ID"),
+			SecretAccessKey: viper.GetString("AWS_SECRET_ACCESS_KEY"),
+			Region:          viper.GetString("AWS_REGION"),
+			BucketName:      viper.GetString("AWS_BUCKET_NAME"),
+		}),
+		FileService: sqlite.NewFileService(&db),
 	})
 
 	fmt.Printf("Server running on %s\n", port)
