@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/0xdod/fileserve"
-	"github.com/0xdod/fileserve/filestorage"
 	"github.com/0xdod/fileserve/sqlite"
 	"github.com/gorilla/mux"
 )
@@ -14,14 +13,14 @@ type Server struct {
 	server      *http.Server
 	db          *sqlite.DB
 	mux         *mux.Router
-	fileStorage filestorage.FileStorage
+	fileStorage fileserve.FileStorage
 	fileService fileserve.FileService
 }
 
 type NewServerOpts struct {
 	DB          *sqlite.DB
 	Addr        *string
-	FileStorage filestorage.FileStorage
+	FileStorage fileserve.FileStorage
 	FileService fileserve.FileService
 }
 

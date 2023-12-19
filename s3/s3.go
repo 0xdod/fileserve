@@ -1,4 +1,4 @@
-package filestorage
+package s3
 
 import (
 	"bytes"
@@ -9,26 +9,27 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/0xdod/fileserve"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type s3Backend struct {
+type s3CloudStorage struct {
 	client     *s3.S3
 	bucketName string
 	region     string
 }
 
-type S3BackendConfig struct {
+type Config struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	Region          string
 	BucketName      string
 }
 
-func (cfg *S3BackendConfig) Validate() error {
+func (cfg *Config) Validate() error {
 	if cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" || cfg.Region == "" || cfg.BucketName == "" {
 		return errors.New("Invalid s3 configuration")
 	}
@@ -36,7 +37,7 @@ func (cfg *S3BackendConfig) Validate() error {
 	return nil
 }
 
-func NewS3StorageBackend(cfg *S3BackendConfig) *s3Backend {
+func NewFileStorage(cfg *Config) *s3CloudStorage {
 	if err := cfg.Validate(); err != nil {
 		panic(err)
 	}
@@ -48,14 +49,14 @@ func NewS3StorageBackend(cfg *S3BackendConfig) *s3Backend {
 
 	client := s3.New(sess)
 
-	return &s3Backend{
+	return &s3CloudStorage{
 		client:     client,
 		bucketName: cfg.BucketName,
 		region:     cfg.Region,
 	}
 }
 
-func (s *s3Backend) Upload(ctx context.Context, param UploadParam) (string, error) {
+func (s *s3CloudStorage) Upload(ctx context.Context, param fileserve.UploadParam) (string, error) {
 	_, err := s.client.PutObjectWithContext(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(s.bucketName),
 		Key:         aws.String(param.Name),
@@ -73,7 +74,7 @@ func (s *s3Backend) Upload(ctx context.Context, param UploadParam) (string, erro
 	return endpoint, nil
 }
 
-func (s *s3Backend) Download(ctx context.Context, name string) ([]byte, error) {
+func (s *s3CloudStorage) Download(ctx context.Context, name string) ([]byte, error) {
 	res, err := s.client.GetObjectWithContext(ctx, &s3.GetObjectInput{
 		Bucket: &s.bucketName,
 		Key:    &name,
@@ -93,7 +94,7 @@ func (s *s3Backend) Download(ctx context.Context, name string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (s *s3Backend) createBucketWithPublicReadPolicy() {
+func (s *s3CloudStorage) createBucketWithPublicReadPolicy() {
 	// Check if the bucket exists
 	if _, err := s.client.HeadBucket(&s3.HeadBucketInput{
 		Bucket: aws.String(s.bucketName),

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/0xdod/fileserve"
-	"github.com/0xdod/fileserve/filestorage"
 	fshttp "github.com/0xdod/fileserve/http"
 	"github.com/0xdod/fileserve/sqlite"
 	"github.com/stretchr/testify/mock"
@@ -15,7 +14,7 @@ type MockFileStorage struct {
 	mock.Mock
 }
 
-func (m *MockFileStorage) Upload(ctx context.Context, param filestorage.UploadParam) (string, error) {
+func (m *MockFileStorage) Upload(ctx context.Context, param fileserve.UploadParam) (string, error) {
 	args := m.Called(ctx, param)
 	return args.String(0), args.Error(1)
 }

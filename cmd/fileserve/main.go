@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/0xdod/fileserve/filestorage"
 	"github.com/0xdod/fileserve/http"
+	"github.com/0xdod/fileserve/s3"
 	"github.com/0xdod/fileserve/sqlite"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -42,7 +42,7 @@ func main() {
 	server := http.NewServer(http.NewServerOpts{
 		DB:   &db,
 		Addr: &port,
-		FileStorage: filestorage.NewS3StorageBackend(&filestorage.S3BackendConfig{
+		FileStorage: s3.NewFileStorage(&s3.Config{
 			AccessKeyID:     viper.GetString("AWS_ACCESS_KEY_ID"),
 			SecretAccessKey: viper.GetString("AWS_SECRET_ACCESS_KEY"),
 			Region:          viper.GetString("AWS_REGION"),

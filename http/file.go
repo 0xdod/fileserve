@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/0xdod/fileserve"
-	"github.com/0xdod/fileserve/filestorage"
 	"github.com/gorilla/mux"
 )
 
@@ -32,7 +31,7 @@ func (s *Server) handleUpload() http.Handler {
 
 		buffer := make([]byte, handler.Size)
 		file.Read(buffer)
-		loc, err := s.fileStorage.Upload(context.Background(), filestorage.UploadParam{
+		loc, err := s.fileStorage.Upload(context.Background(), fileserve.UploadParam{
 			Name:    handler.Filename,
 			Content: buffer,
 		})
