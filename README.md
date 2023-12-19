@@ -1,6 +1,6 @@
 # File Upload Service
 
-This is a Golang application serving as a File Upload Service. It handles HTTP requests for file uploads and downloads. It uses AWS S3 for file storage and sqlite3 as a database 
+This is a Golang http application for uploading and downloading files. It uses AWS S3 for file storage and sqlite3 as a database 
 
 ## Requirements
 
@@ -18,7 +18,7 @@ This is a Golang application serving as a File Upload Service. It handles HTTP r
 ## Usage
 
 1. Run migrations: `make up-migrate`
-2. Set the environment variables: `cp .env.sample .env`c, setting valid S3 access and secret keys
+2. Set the environment variables: `cp .env.sample .env`. Remember to set valid S3 credentials
 3. Start the server: `make run`
 4. Open your browser and navigate to `http://localhost:7000` to access the application.
 
